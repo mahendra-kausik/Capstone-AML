@@ -1,0 +1,20 @@
+[
+  {
+    "comparison": "W1\u2192W2",
+    "tau": 0.1119,
+    "pval": 0.032891,
+    "drift": true
+  },
+  {
+    "comparison": "W2\u2192W3",
+    "tau": 0.0327,
+    "pval": 0.533394,
+    "drift": true
+  },
+  {
+    "comparison": "W3\u2192W4",
+    "tau": 0.1082,
+    "pval": 0.039116,
+    "drift": true
+  }
+]

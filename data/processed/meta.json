@@ -1,0 +1,22 @@
+{
+  "num_snapshots": 49,
+  "num_features": 165,
+  "feature_cols": "feat_0 to feat_164",
+  "local_features": "feat_0 to feat_93 (94 features)",
+  "aggregated_features": "feat_94 to feat_164 (71 features)",
+  "total_nodes": 46564,
+  "total_edges": 36624,
+  "total_illicit": 4545,
+  "overall_illicit_pct": 9.761,
+  "train_snapshots": "T1\u2013T34",
+  "val_snapshots": "T35\u2013T36",
+  "test_snapshots": "T37\u2013T49",
+  "label_mapping": {
+    "0": "licit",
+    "1": "illicit"
+  },
+  "scaler": "StandardScaler fitted on T1\u2013T34 only",
+  "class_imbalance_train": "1:8.6 (illicit:licit)",
+  "features_anonymized": true,
+  "note": "165 features confirmed (167 cols - tx_id - time_step)"
+}
