@@ -7,14 +7,14 @@
   },
   {
     "comparison": "W2\u2192W3",
-    "tau": 0.5425,
-    "pval": 0.001231,
+    "tau": 0.5882,
+    "pval": 0.000629,
     "drift": true
   },
   {
     "comparison": "W3\u2192W4",
-    "tau": 0.1696,
-    "pval": 0.332007,
+    "tau": 0.1474,
+    "pval": 0.385857,
     "drift": true
   }
 ]
