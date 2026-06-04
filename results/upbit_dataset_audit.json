@@ -1,0 +1,47 @@
+{
+  "processed_dir": "/path/to/processed_upbit",
+  "raw_dir": "/Users/ayushi.s.extbluemachines.ai/Desktop/capstone/Capstone-AML/data/raw/upbit",
+  "artifacts": {
+    "snapshots.pt": {
+      "path": "/path/to/processed_upbit/snapshots.pt",
+      "exists": false,
+      "size_bytes": null
+    },
+    "meta.json": {
+      "path": "/path/to/processed_upbit/meta.json",
+      "exists": false,
+      "size_bytes": null
+    },
+    "scaler.pkl": {
+      "path": "/path/to/processed_upbit/scaler.pkl",
+      "exists": false,
+      "size_bytes": null
+    },
+    "snapshot_stats.csv": {
+      "path": "/path/to/processed_upbit/snapshot_stats.csv",
+      "exists": false,
+      "size_bytes": null
+    }
+  },
+  "checks": {},
+  "reference_colab_summary": {
+    "num_snapshots": 49,
+    "num_features": 165,
+    "total_nodes": 761448,
+    "total_edges": 2318459,
+    "total_illicit": 71033,
+    "overall_illicit_pct": 9.329,
+    "train_snapshots": "T1\u2013T34",
+    "val_snapshots": "T35\u2013T36",
+    "test_snapshots": "T37\u2013T49",
+    "class_imbalance_train": "1:11.4",
+    "source": "UpbitHack \u2014 EthereumHeist (IEEE TIFS 2023)"
+  },
+  "raw_csvs": {
+    "all-tx.csv": false,
+    "all-address.csv": false,
+    "accounts-hacker.csv": false
+  },
+  "status": "MISSING_SNAPSHOTS",
+  "message": "processed_upbit/snapshots.pt not found. Copy from Colab Drive (data/processed_upbit/) or run: python scripts/preprocess_upbit.py after placing CSVs in data/raw/upbit/"
+}

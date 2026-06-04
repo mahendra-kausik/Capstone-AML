@@ -63,3 +63,36 @@ pip install -r requirements.txt
 - If LFS download fails or collaborators cannot use LFS, provide a dataset download (GitHub Release, Google Drive, or S3) and add the link here.
 
 If you need, I can add a Release with the dataset or upload it to a cloud link and update this README.
+
+**EvolveGCN-H tuning (publication pipeline)**
+
+```bash
+cd Capstone-AML
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Full grid: 36 runs (LR × class_weight × hidden × dropout) — use GPU
+python scripts/run_evolvegcn_tuning.py
+
+# Smoke test
+python scripts/run_evolvegcn_tuning.py --quick --quick-epochs 3
+```
+
+Outputs: `results/evolvegcn_experiments.csv`, `models/evolvegcn_best.pt`, `data/processed/evolvegcn_summary.json`, figures under `figures/`.
+
+**EthereumHeist / UpbitHack validation**
+
+```bash
+# 1) Place processed artifacts (see data/processed_upbit/README.md)
+#    or: raw CSVs in data/raw/upbit/ then:
+python scripts/preprocess_upbit.py
+
+# 2) Full pipeline (audit → train → SHAP → paper tables)
+python scripts/run_upbit_validation.py
+
+# Optional: external processed dir
+export UPBIT_PROCESSED_DIR="/path/to/processed_upbit"
+python scripts/run_upbit_validation.py
+```
+
+Outputs: `data/processed_upbit/upbit_static_summary.json`, `upbit_evolve_summary.json`, `data/shap/upbit/`, `figures/upbit/`, `results/cross_dataset_results.md`, `results/ieee_results_section_draft.md`. Elliptic files are not modified.

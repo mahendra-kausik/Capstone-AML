@@ -1,2 +1,7 @@
-# Local model checkpoints and binary artifacts
+.venv/
+.mplconfig/
+
+# Local model checkpoints (allow publication checkpoints)
 models/*.pt
+!models/static_gcn_best.pt
+!models/evolvegcn_best.pt
