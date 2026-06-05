@@ -106,3 +106,36 @@ docker compose up --build
 # Login: analyst@aml.local / demoaml2024
 # Upload: samples/demo_transactions.csv
 ```
+
+---
+
+## Publication Reproduction (Journal Experiments)
+
+Reproduces all Phase A experiments for `paper/journal_manuscript.md` without retraining GNNs.
+
+**Prerequisites:** `data/processed/snapshots.pt`, `models/static_gcn_best.pt`, `models/evolvegcn_best.pt`, `data/shap/kendall_tau_results.json`
+
+```bash
+cd Capstone-AML
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# One-command pipeline (baselines, ablation, early warning, stats, figures)
+chmod +x reproduce.sh
+./reproduce.sh
+
+# Or run individual experiments:
+python scripts/run_graph_ablation.py
+python scripts/run_per_snapshot_metrics.py
+python scripts/early_warning_analysis.py
+python scripts/run_calibration.py
+python scripts/run_statistical_validation.py
+python scripts/generate_publication_figures.py
+```
+
+**Outputs:** `results/*.csv`, `figures/*.png`, `paper/figures/*.png`
+
+**Status report:** `PUBLICATION_READINESS_REPORT.md`
+
+**Cross-dataset (Upbit):** See `docs/UPBIT_DATA_ACQUISITION.md` — required before journal submission.
+# AML_Intelligence
