@@ -24,9 +24,13 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production-use-openssl-rand"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    jwt_refresh_days: int = 7
+
+    seed_demo_users: bool = True
 
     rate_limit_predict: str = "60/minute"
     rate_limit_explain: str = "20/minute"
+    rate_limit_login: str = "10/minute"
 
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 

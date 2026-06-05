@@ -1,0 +1,124 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{Explainable Temporal Graph Neural Networks for Cryptocurrency Anti-Money Laundering under Concept Drift}
+
+\author{\IEEEauthorblockN{Author Names Omitted for Review}
+\IEEEauthorblockA{\textit{Affiliation} \\
+Email: author@institution.edu}}
+
+\maketitle
+
+\begin{abstract}
+Cryptocurrency anti-money laundering (AML) systems must detect illicit transactions while remaining interpretable to compliance officers and robust to temporal distribution shift. We compare a Static Graph Convolutional Network (Static GCN) against EvolveGCN-H on the Elliptic Bitcoin dataset (49 temporal snapshots, 165 features, dark-market shutdown at T43). Under a strict temporal split (train T1--T34, validation T35--T36, test T37--T49), Static GCN achieves AUROC 0.8573 and F1 0.4677, outperforming EvolveGCN-H (AUROC 0.7666, F1 0.3269). Both models collapse at T43 (Static F1 0.0163; Evolve F1 0.0225), detecting only 1 of 24 illicit transactions. KernelSHAP explainability and Kendall $\tau$ rank-correlation analysis reveal sharp attribution drift at W3$\rightarrow$W4 (Static $\tau$ 0.1474; Evolve $\tau$ 0.1602). EvolveGCN-H shows marginally higher W3$\rightarrow$W4 stability and smaller drift-probe F1 drop (0.0049 vs.\ 0.0918). We discuss implications for deployable AML systems and explainability-aware drift monitoring.
+\end{abstract}
+
+\begin{IEEEkeywords}
+anti-money laundering, graph neural networks, concept drift, explainable AI, SHAP, Kendall tau, Bitcoin
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{A}{nti-money} laundering (AML) in cryptocurrency markets requires models that are accurate, interpretable, and robust to temporal shift. The Elliptic Bitcoin dataset~\cite{weber2019anti} provides 49 temporally ordered graph snapshots with 165 anonymized features and an illicit rate of 9.761\%. A documented dark-market shutdown at snapshot T43 induces severe concept drift.
+
+Graph Neural Networks (GNNs) are widely applied to AML~\cite{weber2019anti,weber2020aml}. Static GCNs~\cite{kipf2017semi} use fixed weights; EvolveGCN-H~\cite{pareja2020evolvegcn} evolves weights via GRU cells. Prior work rarely integrates predictive evaluation, post-hoc explainability~\cite{lundberg2017unified}, and quantitative drift measurement~\cite{lu2019learning}.
+
+\textbf{Contributions:} (1)~Reproducible Static GCN and EvolveGCN-H pipeline with public checkpoints; (2)~rigorous temporal evaluation with pre/post-T43 analysis; (3)~KernelSHAP + Kendall $\tau$ drift monitoring; (4)~honest comparison showing Static GCN superiority on aggregate metrics with modest EvolveGCN-H stability benefits; (5)~production deployment path via FastAPI serving.
+
+\section{Related Work}
+Weber et al.\ introduced Elliptic and GCN-based AML~\cite{weber2019anti}. EvolveGCN~\cite{pareja2020evolvegcn} adapts GCN weights temporally. Concept drift surveys~\cite{gama2014survey,lu2019learning} motivate our T43 analysis. SHAP~\cite{lundberg2017unified} enables feature attribution; we extend it to ranking stability via Kendall $\tau$~\cite{kendall1938new}.
+
+\section{Dataset}
+The Elliptic dataset contains 46,564 nodes, 36,624 edges, and 4,545 illicit labels (9.761\%) across 49 snapshots. Features: 165 dimensions (94 local + 71 aggregated), standardized via StandardScaler on T1--T34 only. Split: train T1--T34, validation T35--T36, test T37--T49. At T43: 1,370 nodes, 24 illicit (1.75\%).
+
+\section{Methodology}
+
+\subsection{Static GCN}
+Architecture: GCNConv(165$\rightarrow$64) $\rightarrow$ ReLU $\rightarrow$ Dropout(0.5) $\rightarrow$ GCNConv(64$\rightarrow$32) $\rightarrow$ Linear(32$\rightarrow$2). Training: AdamW, lr=0.001, class weight 9.0, 200 epochs, patience 20.
+
+\subsection{EvolveGCN-H}
+GRU-evolved weight matrices with normalized graph convolution (165$\rightarrow$64$\rightarrow$32$\rightarrow$2). Best run: lr=0.0001, class weight 5.0, grad clip 1.0, 500 epochs, patience 40 (run r025\_lr0.0001\_cw5.0\_h64\_do0.5).
+
+\subsection{SHAP and Kendall $\tau$}
+KernelSHAP with 100 background licit nodes, nsamples=200, max 1,600 illicit nodes/window. Four windows: W1 (T1--T10), W2 (T11--T20), W3 (T21--T30), W4 (T31--T49). Kendall $\tau$ computed on top-15 feature union; drift flagged when $\tau < 0.70$.
+
+\section{Experimental Setup}
+Temporal split prevents leakage. Metrics: AUROC, F1, Precision, Recall; per-snapshot and pre/post-T43 aggregates. Drift probe: train T1--T16, test T33--T49. Tabular baselines (Logistic Regression, Random Forest, XGBoost, MLP) use the same scaled node features and temporal split as Static GCN, pooling nodes without graph edges (\texttt{scripts/run\_baseline\_models.py}). Seed: 42.
+
+\section{Results}
+
+\subsection{Baseline vs.\ Graph Comparison}
+Table~\ref{tab:baseline_comparison} compares tabular baselines and GNNs on the test set (T37--T49). Random Forest (AUROC 0.918, F1 0.759) and XGBoost (AUROC 0.917, F1 0.730) outperform both GNNs, indicating that much predictive signal resides in tabular features under pooled evaluation. Static GCN (AUROC 0.857, F1 0.468) exceeds the MLP baseline with identical layer widths, suggesting graph convolutions improve F1 over feed-forward features alone. EvolveGCN-H trails all tabular models.
+
+\input{baseline_comparison.tex}
+
+\subsection{GNN-Only Summary}
+\begin{table}[htbp]
+\caption{GNN Test Performance (T37--T49)}
+\label{tab:aggregate}
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Static GCN} & \textbf{EvolveGCN-H} \\
+\midrule
+AUROC & \textbf{0.8573} & 0.7666 \\
+F1 & \textbf{0.4677} & 0.3269 \\
+Precision & \textbf{0.3831} & 0.2638 \\
+Recall & \textbf{0.6002} & 0.4297 \\
+Best Val AUROC & \textbf{0.941} & 0.885 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{T43 Analysis}
+At T43: Static F1=0.0163, Evolve F1=0.0225; only 1/24 illicit detected (4.17\%). Pre/post-T43 mean F1: Static 0.5519$\rightarrow$0.0446 (drop 0.5073); Evolve 0.4175$\rightarrow$0.0493 (drop 0.3682).
+
+\subsection{Kendall $\tau$}
+\begin{table}[htbp]
+\caption{SHAP Ranking Stability (Kendall $\tau$)}
+\label{tab:tau}
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Window} & \textbf{Static} & \textbf{Evolve} \\
+\midrule
+W1$\rightarrow$W2 & 0.5556 & 0.4386 \\
+W2$\rightarrow$W3 & 0.5882 & 0.3474 \\
+W3$\rightarrow$W4 & 0.1474 & \textbf{0.1602} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All pairs below $\tau=0.70$ drift threshold. W3$\rightarrow$W4 coincides with T43 shutdown.
+
+\section{Explainability Analysis}
+Static GCN top SHAP features shift from feat\_54/52/51/89 (W1--W3) to feat\_143/108/162 (W4). Attribution regime change aligns with predictive collapse at T43.
+
+\section{Concept Drift Analysis}
+Three drift tiers: gradual (W1--W3, $\tau\in[0.35,0.59]$), sudden (W3$\rightarrow$W4, $\tau\approx 0.15$, T43), and post-shock (T44--T49, AUROC recovery without F1 recovery).
+
+\section{Discussion}
+Static GCN outperforms EvolveGCN-H likely due to sufficient training data (34 snapshots), lower optimization complexity, and EvolveGCN hyperparameter sensitivity. Tree-ensemble tabular baselines (Random Forest, XGBoost) exceed Static GCN on aggregate AUROC/F1, showing that Elliptic node features alone carry strong signal; graph convolutions nonetheless improve F1 over an MLP with matched width. EvolveGCN-H offers modest explainability stability ($\Delta\tau=0.0128$ at W3$\rightarrow$W4) and smaller drift-probe F1 drop. AUROC alone is insufficient for AML operations under drift.
+
+\section{Limitations}
+Single-dataset evaluation; modest $\tau$ gains; SHAP computational cost; extreme class imbalance at T43; tabular SHAP mode; anonymized features.
+
+\section{Future Work}
+Cross-chain validation (Ethereum/Upbit), graph transformers, online drift adaptation, graph-aware explainability, threshold calibration.
+
+\section{Conclusion}
+Static GCN achieves superior aggregate AML performance on Elliptic, but both models fail at T43. SHAP-based Kendall $\tau$ monitoring detects attribution drift complementary to predictive metrics. Explainability stability and predictive accuracy are distinct deployment objectives.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

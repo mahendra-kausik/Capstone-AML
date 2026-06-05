@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       loading,
-      canWrite: user?.role === "admin" || user?.role === "analyst",
+      canWrite: user?.role === "admin" || user?.role === "analyst" || user?.role === "manager",
       isAdmin: user?.role === "admin",
       login,
       logout,
@@ -87,5 +87,10 @@ export function useAuth() {
 }
 
 export function roleLabel(role: UserRole) {
-  return { admin: "Administrator", analyst: "Analyst", viewer: "Viewer" }[role];
+  return {
+    admin: "Administrator",
+    manager: "Manager",
+    analyst: "Compliance Analyst",
+    viewer: "Viewer",
+  }[role];
 }

@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "analyst" | "viewer";
+export type UserRole = "admin" | "manager" | "analyst" | "viewer";
 
 export interface User {
   id: string;
@@ -53,6 +53,7 @@ export interface HistoryItem {
 export interface HistoryDetail extends HistoryItem {
   top_features: TopFeature[];
   features: number[];
+  narrative?: string;
   shap?: {
     id: string;
     method: string;
@@ -68,6 +69,7 @@ export interface CaseItem {
   title: string;
   status: string;
   priority: string;
+  assignee_id?: string;
   assignee_email?: string;
   tx_id?: string;
   risk_score?: number;
@@ -76,6 +78,27 @@ export interface CaseItem {
   notes_count: number;
   created_at: string;
   updated_at: string;
+  notes?: Array<{ id: string; content: string; author_email?: string; created_at: string }>;
+}
+
+export interface AlertItem {
+  id: string;
+  prediction_id?: string;
+  alert_type: string;
+  severity: string;
+  status: string;
+  title: string;
+  message: string;
+  payload?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ReportItem {
+  id: string;
+  title: string;
+  report_type: string;
+  summary?: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface GraphNode {

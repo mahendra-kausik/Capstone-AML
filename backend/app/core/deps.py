@@ -40,3 +40,12 @@ def require_analyst_or_admin(user: User = Depends(get_current_user)) -> User:
             detail="Viewers have read-only access",
         )
     return user
+
+
+def require_write_access(user: User = Depends(get_current_user)) -> User:
+    if user.role in (UserRole.viewer,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions for write operations",
+        )
+    return user

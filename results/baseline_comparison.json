@@ -1,0 +1,50 @@
+[
+  {
+    "Model": "Random Forest",
+    "Type": "Tabular",
+    "AUROC": 0.9182,
+    "F1": 0.7585,
+    "Precision": 0.8811,
+    "Recall": 0.6659
+  },
+  {
+    "Model": "XGBoost",
+    "Type": "Tabular",
+    "AUROC": 0.9165,
+    "F1": 0.7303,
+    "Precision": 0.7906,
+    "Recall": 0.6786
+  },
+  {
+    "Model": "Logistic Regression",
+    "Type": "Tabular",
+    "AUROC": 0.8648,
+    "F1": 0.2902,
+    "Precision": 0.1742,
+    "Recall": 0.8675
+  },
+  {
+    "Model": "MLP",
+    "Type": "Tabular",
+    "AUROC": 0.8574,
+    "F1": 0.1787,
+    "Precision": 0.0987,
+    "Recall": 0.9447
+  },
+  {
+    "Model": "Static GCN",
+    "Type": "GNN",
+    "AUROC": 0.8573,
+    "F1": 0.4677,
+    "Precision": 0.3831,
+    "Recall": 0.6002
+  },
+  {
+    "Model": "EvolveGCN-H",
+    "Type": "GNN",
+    "AUROC": 0.7666,
+    "F1": 0.3269,
+    "Precision": 0.2638,
+    "Recall": 0.4297
+  }
+]

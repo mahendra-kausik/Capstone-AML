@@ -1,9 +1,11 @@
 import type {
+  AlertItem,
   CaseItem,
   DriftPayload,
   HistoryDetail,
   HistoryItem,
   PredictResult,
+  ReportItem,
   UploadResult,
   User,
 } from "./types";
@@ -27,7 +29,16 @@ export function getToken(): string | null {
 
 export function logout() {
   if (typeof window === "undefined") return;
+  const refresh = localStorage.getItem("aml_refresh");
+  if (refresh) {
+    fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refresh }),
+    }).catch(() => {});
+  }
   localStorage.removeItem("aml_token");
+  localStorage.removeItem("aml_refresh");
   localStorage.removeItem("aml_role");
   window.location.href = "/login";
 }
@@ -77,10 +88,14 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 }
 
 export async function login(email: string, password: string) {
-  return api<{ access_token: string; role: string }>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
+  const result = await api<{ access_token: string; refresh_token?: string; role: string }>(
+    "/auth/login",
+    { method: "POST", body: JSON.stringify({ email, password }) }
+  );
+  if (typeof window !== "undefined" && result.refresh_token) {
+    localStorage.setItem("aml_refresh", result.refresh_token);
+  }
+  return result;
 }
 
 export async function getMe() {
@@ -171,7 +186,7 @@ export async function uploadCsv(file: File, model = "static") {
   const token = getToken();
   const form = new FormData();
   form.append("file", file);
-  const base = typeof window !== "undefined" ? "/api/v1" : API_BASE;
+  const base = resolveApiBase();
   let res: Response;
   try {
     res = await fetch(`${base}/upload?model=${model}`, {
@@ -228,12 +243,67 @@ export async function createCase(body: {
 
 export async function updateCase(
   caseId: string,
-  body: { status?: string; priority?: string; title?: string }
+  body: { status?: string; priority?: string; title?: string; assignee_id?: string }
 ) {
   return api<CaseItem>(`/cases/${caseId}`, {
     method: "PATCH",
     body: JSON.stringify(body),
   });
+}
+
+export async function getAlerts(params?: { status?: string; limit?: number }) {
+  const q = new URLSearchParams();
+  if (params?.status) q.set("status", params.status);
+  if (params?.limit) q.set("limit", String(params.limit));
+  const qs = q.toString();
+  return api<{ items: AlertItem[]; total: number; unread_count: number }>(
+    `/alerts${qs ? `?${qs}` : ""}`
+  );
+}
+
+export async function updateAlert(alertId: string, status: string) {
+  return api<AlertItem>(`/alerts/${alertId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function generateReport(reportType: string, title?: string) {
+  return api<ReportItem>("/reports", {
+    method: "POST",
+    body: JSON.stringify({ report_type: reportType, title }),
+  });
+}
+
+export async function getReports(limit = 20) {
+  return api<{ items: ReportItem[] }>(`/reports?limit=${limit}`);
+}
+
+export function getReportCsvUrl(reportType = "compliance", riskMin = 0.5): string {
+  const base = resolveApiBase();
+  const token = getToken();
+  return `${base}/reports/export/csv?report_type=${reportType}&risk_min=${riskMin}${token ? "" : ""}`;
+}
+
+export async function downloadReportCsv(reportType = "compliance") {
+  const token = getToken();
+  const res = await fetch(
+    `${resolveApiBase()}/reports/export/csv?report_type=${reportType}`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+  );
+  if (!res.ok) throw new Error("Export failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${reportType}_report.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function getHealth() {
+  const res = await fetch("/health");
+  return res.json();
 }
 
 export async function addCaseNote(caseId: string, content: string) {

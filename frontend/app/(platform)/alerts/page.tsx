@@ -6,38 +6,49 @@ import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDrift, getHistory } from "@/lib/api";
-import { formatPercent, riskSeverity } from "@/lib/utils";
-import type { HistoryItem } from "@/lib/types";
+import { getAlerts, getDrift, updateAlert } from "@/lib/api";
+import type { AlertItem } from "@/lib/types";
 
 const LEVELS = ["critical", "high", "medium", "low"] as const;
 
 export default function AlertsPage() {
-  const [txAlerts, setTxAlerts] = useState<HistoryItem[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [driftAlerts, setDriftAlerts] = useState<any[]>([]);
   const [level, setLevel] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([getHistory({ limit: 200 }), getDrift()])
-      .then(([h, d]) => {
-        setTxAlerts(h.items.filter((i) => i.risk_score >= 0.4 || i.prediction === "illicit"));
+    Promise.all([getAlerts({ limit: 100 }), getDrift()])
+      .then(([a, d]) => {
+        setAlerts(a.items);
         setDriftAlerts(d.alerts || []);
       })
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load alerts"))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = level
-    ? txAlerts.filter((i) => riskSeverity(i.risk_score) === level)
-    : txAlerts;
+  const filtered = level ? alerts.filter((a) => a.severity === level) : alerts;
+
+  async function acknowledge(id: string) {
+    await updateAlert(id, "acknowledged");
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "acknowledged" } : a)));
+  }
 
   if (loading) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-8 text-center text-destructive">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2">
         <Button variant={!level ? "default" : "outline"} size="sm" onClick={() => setLevel("")}>
-          All
+          All ({alerts.length})
         </Button>
         {LEVELS.map((l) => (
           <Button
@@ -70,38 +81,43 @@ export default function AlertsPage() {
       )}
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold">Transaction Risk Alerts</h2>
+        <h2 className="text-sm font-semibold">Alert Queue</h2>
         {filtered.length === 0 ? (
           <p className="py-12 text-center text-muted-foreground">No alerts match this filter</p>
         ) : (
-          filtered.map((item) => {
-            const sev = riskSeverity(item.risk_score);
-            return (
-              <div
-                key={item.prediction_id}
-                className="glass-card flex flex-wrap items-center justify-between gap-4 p-4 transition hover:border-primary/30"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-2 w-2 rounded-full animate-pulse ${
-                      sev === "critical" ? "bg-risk-critical" : sev === "high" ? "bg-risk-high" : "bg-risk-medium"
-                    }`}
-                  />
-                  <div>
-                    <p className="font-mono text-sm">{item.tx_id}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold">{formatPercent(item.risk_score)}</span>
-                  <Badge variant={sev}>{sev}</Badge>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/transactions/${item.prediction_id}`}>Investigate</Link>
-                  </Button>
+          filtered.map((alert) => (
+            <div
+              key={alert.id}
+              className="glass-card flex flex-wrap items-center justify-between gap-4 p-4 transition hover:border-primary/30"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-2 w-2 rounded-full ${alert.status === "open" ? "animate-pulse" : ""} ${
+                    alert.severity === "critical" ? "bg-risk-critical" : alert.severity === "high" ? "bg-risk-high" : "bg-risk-medium"
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-medium">{alert.title}</p>
+                  <p className="text-xs text-muted-foreground">{alert.message}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(alert.created_at).toLocaleString()}</p>
                 </div>
               </div>
-            );
-          })
+              <div className="flex items-center gap-3">
+                <Badge variant={alert.severity as "critical" | "high" | "medium" | "low"}>{alert.severity}</Badge>
+                <Badge variant="secondary">{alert.status}</Badge>
+                {alert.status === "open" && (
+                  <Button variant="outline" size="sm" onClick={() => acknowledge(alert.id)}>
+                    Acknowledge
+                  </Button>
+                )}
+                {alert.prediction_id && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/transactions/${alert.prediction_id}`}>Investigate</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

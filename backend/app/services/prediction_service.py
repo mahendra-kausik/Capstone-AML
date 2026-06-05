@@ -22,6 +22,7 @@ from app.schemas.predict import (
     PredictResponse,
     TopFeature,
 )
+from app.services import alert_service
 
 
 def _resolve_features(req: PredictRequest | ExplainRequest) -> np.ndarray:
@@ -68,6 +69,8 @@ def run_predict(db: Session, user: User | None, req: PredictRequest) -> PredictR
         top_features=[t.model_dump() for t in tops],
     )
     db.add(pred)
+    db.flush()
+    alert_service.maybe_create_prediction_alert(db, pred, req.tx_id)
     db.commit()
 
     return PredictResponse(
@@ -147,6 +150,7 @@ def run_batch(
         )
         db.add(pred)
         db.flush()
+        alert_service.maybe_create_prediction_alert(db, pred, tid)
         results.append(
             PredictResponse(
                 tx_id=tid,
@@ -191,9 +195,9 @@ def run_explain(db: Session, user: User | None, req: ExplainRequest) -> dict:
         model_name=req.model,
         risk_score=out["risk_score"],
         prediction=out["prediction"],
-        confidence=out["confidence"],
-        prob_licit=1 - out["risk_score"],
-        prob_illicit=out["risk_score"],
+        confidence=out.get("confidence", out["risk_score"]),
+        prob_licit=out.get("prob_licit", 1 - out["risk_score"]),
+        prob_illicit=out.get("prob_illicit", out["risk_score"]),
         top_features=[t.model_dump() for t in tops],
     )
     db.add(pred)
@@ -206,6 +210,7 @@ def run_explain(db: Session, user: User | None, req: ExplainRequest) -> dict:
         method=out.get("method", "kernel_shap"),
     )
     db.add(shap_row)
+    alert_service.maybe_create_prediction_alert(db, pred, req.tx_id)
     db.commit()
 
     return {

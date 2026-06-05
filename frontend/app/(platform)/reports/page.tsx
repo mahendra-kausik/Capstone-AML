@@ -1,39 +1,65 @@
 "use client";
 
-import { FileText, Download } from "lucide-react";
+import { useState } from "react";
+import { FileText, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/contexts/toast";
+import { downloadReportCsv, generateReport } from "@/lib/api";
 
 const REPORTS = [
   {
     id: "compliance",
     title: "Compliance Report",
     desc: "SAR-ready summary of flagged transactions, model metrics, and drift status.",
+    format: "CSV",
   },
   {
     id: "investigation",
     title: "AML Investigation Report",
-    desc: "Case details, SHAP attributions, and network context for a single alert.",
+    desc: "Case details, SHAP attributions, and network context for flagged alerts.",
+    format: "JSON",
   },
   {
     id: "executive",
     title: "Executive Summary",
     desc: "KPI dashboard snapshot for leadership and board reporting.",
+    format: "JSON",
   },
   {
-    id: "pdf",
-    title: "PDF Export",
-    desc: "Full platform state export for audit and regulatory review.",
+    id: "risk_summary",
+    title: "Risk Summary Export",
+    desc: "Full high-risk transaction export for audit and regulatory review.",
+    format: "CSV",
   },
 ];
 
 export default function ReportsPage() {
   const { toast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
 
-  function generate(id: string, title: string) {
-    toast(`Generating ${title}…`, "info");
-    setTimeout(() => toast(`${title} ready for download`, "success"), 1200);
+  async function handleGenerate(id: string, title: string, format: string) {
+    setLoading(id);
+    try {
+      if (format === "CSV") {
+        await downloadReportCsv(id);
+        toast(`${title} downloaded`, "success");
+      } else {
+        const report = await generateReport(id, title);
+        const blob = new Blob([JSON.stringify(report.summary, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${id}_report.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast(`${title} generated`, "success");
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Report generation failed", "error");
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (
@@ -52,8 +78,18 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" size="sm" onClick={() => generate(r.id, r.title)}>
-              <Download className="h-4 w-4" /> Generate
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading === r.id}
+              onClick={() => handleGenerate(r.id, r.title, r.format)}
+            >
+              {loading === r.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Export {r.format}
             </Button>
           </CardContent>
         </Card>

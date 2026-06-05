@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user
 from app.database.models import BatchJob, Case, Prediction, ShapResult, Transaction, User
 from app.database.session import get_db
+from app.services.narrative_service import generate_narrative
 
 router = APIRouter(tags=["history"])
 
@@ -100,6 +101,10 @@ def prediction_detail(
             "nsamples": shap.nsamples,
             "created_at": shap.created_at.isoformat(),
         }
+    tops = (shap.top_features if shap else p.top_features) or []
+    out["narrative"] = generate_narrative(
+        p.prediction, p.risk_score, tops if isinstance(tops, list) else [], p.confidence
+    )
     return out
 
 

@@ -1,0 +1,7 @@
+Model,Type,AUROC,F1,Precision,Recall
+Random Forest,Tabular,0.9182,0.7585,0.8811,0.6659
+XGBoost,Tabular,0.9165,0.7303,0.7906,0.6786
+Logistic Regression,Tabular,0.8648,0.2902,0.1742,0.8675
+MLP,Tabular,0.8574,0.1787,0.0987,0.9447
+Static GCN,GNN,0.8573,0.4677,0.3831,0.6002
+EvolveGCN-H,GNN,0.7666,0.3269,0.2638,0.4297

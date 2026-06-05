@@ -17,6 +17,7 @@ class Base(DeclarativeBase):
 
 class UserRole(str, enum.Enum):
     admin = "admin"
+    manager = "manager"
     analyst = "analyst"
     viewer = "viewer"
 
@@ -36,24 +37,67 @@ class CasePriority(str, enum.Enum):
     critical = "critical"
 
 
+class AlertSeverity(str, enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class AlertStatus(str, enum.Enum):
+    open = "open"
+    acknowledged = "acknowledged"
+    resolved = "resolved"
+    dismissed = "dismissed"
+
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(255))
+    slug: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    users: Mapped[list["User"]] = relationship(back_populates="organization")
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("organizations.id"), nullable=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False), default=UserRole.analyst
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+    organization: Mapped["Organization | None"] = relationship(back_populates="users")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="user")
     assigned_cases: Mapped[list["Case"]] = relationship(
         back_populates="assignee", foreign_keys="Case.assignee_id"
     )
     case_notes: Mapped[list["CaseNote"]] = relationship(back_populates="author")
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"))
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
 
 class BatchJob(Base):
@@ -100,6 +144,7 @@ class Prediction(Base):
     transaction: Mapped["Transaction"] = relationship(back_populates="predictions")
     shap_results: Mapped[list["ShapResult"]] = relationship(back_populates="prediction")
     case: Mapped["Case | None"] = relationship(back_populates="prediction", uselist=False)
+    alerts: Mapped[list["Alert"]] = relationship(back_populates="prediction")
 
 
 class ShapResult(Base):
@@ -114,6 +159,26 @@ class ShapResult(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     prediction: Mapped["Prediction"] = relationship(back_populates="shap_results")
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    prediction_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("predictions.id"), nullable=True)
+    drift_event_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("drift_events.id"), nullable=True)
+    alert_type: Mapped[str] = mapped_column(String(64))
+    severity: Mapped[AlertSeverity] = mapped_column(Enum(AlertSeverity, native_enum=False))
+    status: Mapped[AlertStatus] = mapped_column(
+        Enum(AlertStatus, native_enum=False), default=AlertStatus.open
+    )
+    title: Mapped[str] = mapped_column(String(255))
+    message: Mapped[str] = mapped_column(String(2000))
+    payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    prediction: Mapped["Prediction | None"] = relationship(back_populates="alerts")
 
 
 class DriftEvent(Base):
@@ -139,6 +204,7 @@ class Report(Base):
     report_type: Mapped[str] = mapped_column(String(64))
     parameters: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    file_format: Mapped[str] = mapped_column(String(16), default="json")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

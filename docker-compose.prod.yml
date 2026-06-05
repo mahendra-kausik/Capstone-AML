@@ -1,16 +1,15 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: aml
-      POSTGRES_PASSWORD: aml_secret
-      POSTGRES_DB: aml_platform
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-aml}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-aml_platform}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aml -d aml_platform"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aml} -d ${POSTGRES_DB:-aml_platform}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,15 +18,14 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
     environment:
       RESEARCH_ROOT: /research
-      DATABASE_URL: postgresql://aml:aml_secret@postgres:5432/aml_platform
-      JWT_SECRET: capstone-demo-jwt-change-in-production
-      CORS_ORIGINS: http://localhost:3000
-      SEED_DEMO_USERS: "true"
-      DEBUG: "true"
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+      DEBUG: ${DEBUG:-false}
+      SEED_DEMO_USERS: ${SEED_DEMO_USERS:-false}
     volumes:
       - .:/research:ro
     depends_on:
@@ -45,13 +43,23 @@ services:
       dockerfile: Dockerfile
       args:
         API_PROXY_TARGET: http://backend:8000
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
     environment:
       API_PROXY_TARGET: http://backend:8000
     depends_on:
       backend:
         condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
 
 volumes:
   pgdata:

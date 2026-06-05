@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Scale } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Scale } from "lucide-react";
+import { useToast } from "@/contexts/toast";
 import {
   createCase,
   getCases,
@@ -21,17 +21,23 @@ import type { CaseItem, HistoryItem } from "@/lib/types";
 
 export default function InvestigationsPage() {
   const { canWrite } = useAuth();
+  const { toast } = useToast();
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
-    const [c, h] = await Promise.all([getCases({ limit: 100 }), getHistory({ limit: 100 })]);
-    setCases(c.items);
-    setHistory(h.items);
-    setLoading(false);
-  }, []);
+    try {
+      const [c, h] = await Promise.all([getCases({ limit: 100 }), getHistory({ limit: 100 })]);
+      setCases(c.items);
+      setHistory(h.items);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to load investigations", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     load();
@@ -157,7 +163,9 @@ export default function InvestigationsPage() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/transactions/${row.prediction_id}`}>Open</Link>
+                        <Link href={cases.some((c) => c.prediction_id === row.prediction_id) ? `/investigations/${row.id}` : `/transactions/${row.prediction_id}`}>
+                          Open
+                        </Link>
                       </Button>
                       {canWrite && !cases.some((c) => c.prediction_id === row.prediction_id) && (
                         <Button variant="outline" size="sm" onClick={() => openCase(row.prediction_id)}>
