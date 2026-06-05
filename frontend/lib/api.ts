@@ -29,14 +29,14 @@ export function logout() {
   if (typeof window === "undefined") return;
   localStorage.removeItem("aml_token");
   localStorage.removeItem("aml_role");
-  window.location.href = "/";
+  window.location.href = "/login";
 }
 
 async function handleUnauthorized(res: Response) {
   if (res.status === 401 && typeof window !== "undefined") {
     localStorage.removeItem("aml_token");
     localStorage.removeItem("aml_role");
-    window.location.href = "/";
+    window.location.href = "/login";
     throw new Error("Session expired — please sign in again.");
   }
 }

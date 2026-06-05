@@ -1,24 +1,22 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { Nav } from "@/components/layout/nav";
 import { AuthProvider } from "@/contexts/auth";
+import { ToastProvider } from "@/contexts/toast";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
   title: "AML Intelligence Platform",
-  description: "Temporal GNN AML — Static GCN & EvolveGCN-H",
+  description: "AI-Powered Anti-Money Laundering Intelligence — GNN, SHAP, Drift Monitoring",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-50 text-slate-900">
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} font-sans min-h-screen bg-background`}>
         <AuthProvider>
-          <Nav />
-          <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+          <ToastProvider>{children}</ToastProvider>
         </AuthProvider>
       </body>
     </html>
