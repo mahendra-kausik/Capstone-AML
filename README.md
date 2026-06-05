@@ -96,3 +96,13 @@ python scripts/run_upbit_validation.py
 ```
 
 Outputs: `data/processed_upbit/upbit_static_summary.json`, `upbit_evolve_summary.json`, `data/shap/upbit/`, `figures/upbit/`, `results/cross_dataset_results.md`, `results/ieee_results_section_draft.md`. Elliptic files are not modified.
+
+**AML Intelligence Platform (full-stack)**
+
+Production app: `backend/` (FastAPI) + `frontend/` (Next.js 15). See `docs/platform/DEPLOYMENT.md`.
+
+```bash
+docker compose up --build
+# Login: analyst@aml.local / demoaml2024
+# Upload: samples/demo_transactions.csv
+```
