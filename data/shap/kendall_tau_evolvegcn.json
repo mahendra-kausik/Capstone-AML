@@ -1,0 +1,39 @@
+{
+  "model": "evolvegcn",
+  "top_k_tau": 15,
+  "threshold": 0.7,
+  "n_bootstrap": 1000,
+  "n_permutation": 1000,
+  "results": [
+    {
+      "comparison": "W1\u2192W2",
+      "tau": 0.4971,
+      "pval": 0.002433,
+      "ci_low": 0.3895,
+      "ci_high": 0.5689,
+      "perm_pvalue": 0.003,
+      "n_union": 19,
+      "drift": true
+    },
+    {
+      "comparison": "W2\u2192W3",
+      "tau": 0.2762,
+      "pval": 0.085195,
+      "ci_low": 0.1688,
+      "ci_high": 0.3579,
+      "perm_pvalue": 0.0849,
+      "n_union": 21,
+      "drift": true
+    },
+    {
+      "comparison": "W3\u2192W4",
+      "tau": -0.3867,
+      "pval": 0.006314,
+      "ci_low": -0.4215,
+      "ci_high": -0.28,
+      "perm_pvalue": 0.009,
+      "n_union": 25,
+      "drift": true
+    }
+  ]
+}

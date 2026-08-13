@@ -1,2 +1,8 @@
 # Local model checkpoints and binary artifacts
 models/*.pt
+
+# Local session docs / agent state (not shared via git)
+CLAUDE.md
+PROGRESS.md
+SESSION_LOG.md
+.claude/

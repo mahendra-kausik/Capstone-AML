@@ -1,0 +1,78 @@
+{
+  "model": "evolvegcn",
+  "top_k": 10,
+  "windows": [
+    {
+      "window": "W1",
+      "time_range": "T1\u2013T10",
+      "local_frac": 0.7,
+      "agg_frac": 0.3,
+      "top_features": [
+        "feat_52",
+        "feat_147",
+        "feat_90",
+        "feat_88",
+        "feat_149",
+        "feat_54",
+        "feat_53",
+        "feat_80",
+        "feat_2",
+        "feat_148"
+      ]
+    },
+    {
+      "window": "W2",
+      "time_range": "T11\u2013T20",
+      "local_frac": 0.7,
+      "agg_frac": 0.3,
+      "top_features": [
+        "feat_52",
+        "feat_88",
+        "feat_90",
+        "feat_54",
+        "feat_147",
+        "feat_53",
+        "feat_148",
+        "feat_149",
+        "feat_51",
+        "feat_86"
+      ]
+    },
+    {
+      "window": "W3",
+      "time_range": "T21\u2013T30",
+      "local_frac": 0.7,
+      "agg_frac": 0.3,
+      "top_features": [
+        "feat_52",
+        "feat_147",
+        "feat_90",
+        "feat_88",
+        "feat_89",
+        "feat_148",
+        "feat_53",
+        "feat_140",
+        "feat_51",
+        "feat_79"
+      ]
+    },
+    {
+      "window": "W4",
+      "time_range": "T31\u2013T49",
+      "local_frac": 0.0,
+      "agg_frac": 1.0,
+      "top_features": [
+        "feat_143",
+        "feat_141",
+        "feat_147",
+        "feat_150",
+        "feat_138",
+        "feat_136",
+        "feat_155",
+        "feat_133",
+        "feat_102",
+        "feat_134"
+      ]
+    }
+  ]
+}

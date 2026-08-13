@@ -1,0 +1,39 @@
+{
+  "model": "static",
+  "top_k_tau": 15,
+  "threshold": 0.7,
+  "n_bootstrap": 1000,
+  "n_permutation": 1000,
+  "results": [
+    {
+      "comparison": "W1\u2192W2",
+      "tau": 0.6667,
+      "pval": 0.000135,
+      "ci_low": 0.5667,
+      "ci_high": 0.7167,
+      "perm_pvalue": 0.002,
+      "n_union": 16,
+      "drift": true
+    },
+    {
+      "comparison": "W2\u2192W3",
+      "tau": 0.5882,
+      "pval": 0.000629,
+      "ci_low": 0.4853,
+      "ci_high": 0.6471,
+      "perm_pvalue": 0.002,
+      "n_union": 17,
+      "drift": true
+    },
+    {
+      "comparison": "W3\u2192W4",
+      "tau": 0.1895,
+      "pval": 0.293451,
+      "ci_low": 0.1242,
+      "ci_high": 0.2865,
+      "perm_pvalue": 0.2807,
+      "n_union": 18,
+      "drift": true
+    }
+  ]
+}
